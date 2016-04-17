@@ -90,9 +90,9 @@ public class ApiClient {
       StringBuilder sb = new StringBuilder();
       BufferedReader bufferedReader =
           new BufferedReader(new InputStreamReader(connection.getInputStream(), "utf-8"));
-      String line = null;
+      String line;
       while ((line = bufferedReader.readLine()) != null) {
-        sb.append(line + "\n");
+        sb.append(line).append("\n");
       }
       bufferedReader.close();
       connection.disconnect();

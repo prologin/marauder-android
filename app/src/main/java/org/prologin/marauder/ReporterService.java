@@ -28,7 +28,7 @@ import java.util.List;
  * The reporter service is in charge of sending location updates to the Marauder API.
  */
 public class ReporterService extends Service implements LocationListener {
-  private static final String TAG = "ReporterService";
+  private static final String TAG = ReporterService.class.getSimpleName();
 
   public static final String REFRESH_CONFIG_ACTION =
       "org.prologin.marauder.ReporterService.REFRESH_CONFIG_ACTION";
