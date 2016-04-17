@@ -20,18 +20,17 @@ import java.util.List;
  * as well as report the current location.
  */
 public class ApiClient {
-  private final static String API_BASE = "https://prologin.org/marauder/api";
+  private static final String API_BASE = "/marauder/api";
   private final static int READ_TIMEOUT_MS = 5000;
   private final static int CONNECT_TIMEOUT_MS = 5000;
 
+
+  private final String apiUrl;
   private String authCookie;
 
   public ApiClient(Context context) throws UnconfiguredException {
-    this(ApiClient.loadCookieFromPreferences(context));
-  }
-
-  public ApiClient(String authCookie) {
-    this.authCookie = authCookie;
+    this.authCookie = ApiClient.loadCookieFromPreferences(context);
+    this.apiUrl = context.getString(R.string.baseApiUrl) + API_BASE;
   }
 
   public List<EventLocation> getConfiguration() throws NetworkErrorException {
@@ -68,7 +67,7 @@ public class ApiClient {
   private JSONObject performApiCall(String handler, JSONObject data)
       throws NetworkErrorException {
     try {
-      URL url = new URL(API_BASE + handler);
+      URL url = new URL(apiUrl + handler);
       HttpURLConnection connection = (HttpURLConnection) url.openConnection();
       connection.setReadTimeout(READ_TIMEOUT_MS);
       connection.setConnectTimeout(CONNECT_TIMEOUT_MS);

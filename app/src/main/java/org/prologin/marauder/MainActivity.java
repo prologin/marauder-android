@@ -89,11 +89,11 @@ public class MainActivity extends AppCompatActivity {
   }
 
   private String getLoginUrl() {
-    return "https://prologin.org/user/login/";
+    return getString(R.string.baseApiUrl) + "/user/login/";
   }
 
   private String getUiUrl() {
-    return "https://prologin.org/marauder/";
+    return getString(R.string.baseApiUrl) + "/marauder/";
   }
 
   private boolean urlMapsToUi(String url) {

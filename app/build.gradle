@@ -1,8 +1,17 @@
 apply plugin: 'com.android.application'
 
+File propFile = new File("$project.rootDir/local.properties")
+if (propFile.exists()) {
+    Properties props = new Properties()
+    props.load(new FileInputStream(propFile))
+    props.each { prop ->
+        project.ext.set(prop.key, prop.value)
+    }
+}
+
 android {
     compileSdkVersion 23
-    buildToolsVersion "21.0.0"
+    buildToolsVersion project.ext.has("buildToolsVersion") ? project.ext["buildToolsVersion"] : "21.0.0"
 
     defaultConfig {
         applicationId "org.prologin.marauder"
@@ -12,7 +21,13 @@ android {
         versionName "1.0"
     }
     buildTypes {
+        debug {
+            resValue "string", "buildName", "DEBUG"
+            resValue "string", "baseApiUrl", project.ext.has("baseApiUrl") ? project.ext["baseApiUrl"] : "https://prologin.org"
+        }
         release {
+            resValue "string", "buildName", "RELEASE"
+            resValue "string", "baseApiUrl", "https://prologin.org"
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             zipAlignEnabled true
