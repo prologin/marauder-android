@@ -88,11 +88,11 @@ public class MainActivity extends AppCompatActivity {
   }
 
   private String getLoginUrl() {
-    return "http://10.0.2.2:8000/user/login/";
+    return "https://prologin.org/user/login/";
   }
 
   private String getUiUrl() {
-    return "http://10.0.2.2:8000/marauder/";
+    return "https://prologin.org/marauder/";
   }
 
   private boolean urlMapsToUi(String url) {

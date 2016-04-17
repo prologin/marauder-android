@@ -20,7 +20,7 @@ import java.util.List;
  * as well as report the current location.
  */
 public class ApiClient {
-  private final static String API_BASE = "http://10.0.2.2:8000/marauder/api";
+  private final static String API_BASE = "https://prologin.org/marauder/api";
   private final static int READ_TIMEOUT_MS = 5000;
   private final static int CONNECT_TIMEOUT_MS = 5000;
 
