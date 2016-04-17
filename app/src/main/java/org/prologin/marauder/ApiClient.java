@@ -3,6 +3,7 @@ package org.prologin.marauder;
 import android.accounts.NetworkErrorException;
 import android.content.Context;
 import android.location.Location;
+import android.util.Log;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -20,10 +21,11 @@ import java.util.List;
  * as well as report the current location.
  */
 public class ApiClient {
-  private static final String API_BASE = "/marauder/api";
-  private final static int READ_TIMEOUT_MS = 5000;
-  private final static int CONNECT_TIMEOUT_MS = 5000;
+  private static final String TAG = ApiClient.class.getSimpleName();
 
+  private static final String API_BASE = "/marauder/api";
+  private static final int READ_TIMEOUT_MS = 5000;
+  private static final int CONNECT_TIMEOUT_MS = 5000;
 
   private final String apiUrl;
   private String authCookie;
@@ -68,6 +70,7 @@ public class ApiClient {
       throws NetworkErrorException {
     try {
       URL url = new URL(apiUrl + handler);
+      Log.d(TAG, "Performing API call at " + url);
       HttpURLConnection connection = (HttpURLConnection) url.openConnection();
       connection.setReadTimeout(READ_TIMEOUT_MS);
       connection.setConnectTimeout(CONNECT_TIMEOUT_MS);

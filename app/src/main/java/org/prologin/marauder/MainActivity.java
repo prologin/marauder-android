@@ -10,6 +10,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Window;
 import android.webkit.CookieManager;
 import android.webkit.WebResourceError;
@@ -24,6 +25,7 @@ import org.jetbrains.annotations.Contract;
 // the online Marauder's map UI.
 public class MainActivity extends AppCompatActivity {
 
+  private static final String TAG = MainActivity.class.getSimpleName();
   protected WebView webView;
 
   @Override
@@ -43,6 +45,7 @@ public class MainActivity extends AppCompatActivity {
 
     webView.getSettings().setJavaScriptEnabled(true);
 
+    Log.d(TAG, "Loading UI at " + getUiUrl());
     webView.loadUrl(getUiUrl());
 
     final Activity activity = this;
