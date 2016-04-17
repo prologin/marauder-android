@@ -43,6 +43,10 @@ public class MainActivity extends AppCompatActivity {
     webView = new WebView(this);
     setContentView(webView);
 
+    final String defaultUserAgent = webView.getSettings().getUserAgentString();
+    webView.getSettings().setUserAgentString(String.format("Marauder/%s (%s)",
+        BuildConfig.VERSION_NAME, defaultUserAgent));
+
     webView.getSettings().setJavaScriptEnabled(true);
 
     Log.d(TAG, "Loading UI at " + getUiUrl());
