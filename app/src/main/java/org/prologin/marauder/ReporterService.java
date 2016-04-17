@@ -75,7 +75,7 @@ public class ReporterService extends Service implements LocationListener {
     msg.obj = intent;
     handler.sendMessage(msg);
 
-    return START_REDELIVER_INTENT;
+    return START_STICKY;
   }
 
   @Override
@@ -92,19 +92,11 @@ public class ReporterService extends Service implements LocationListener {
   }
 
   private void onHandleIntent(Intent intent) {
-    switch (intent.getAction()) {
-      case REFRESH_CONFIG_ACTION:
-        Log.w(TAG, "Starting Marauder config refresh.");
-        eventLocations = getConfiguredGeofences();
-        setupGeoTracking();
-        scheduleAlarm();
-        Log.w(TAG, "Marauder config refresh done.");
-        break;
-
-      default:
-        Log.e(TAG, "Received unknown intent action: " + intent.getAction());
-        break;
-    }
+    Log.w(TAG, "Starting Marauder config refresh.");
+    eventLocations = getConfiguredGeofences();
+    setupGeoTracking();
+    scheduleAlarm();
+    Log.w(TAG, "Marauder config refresh done.");
   }
 
   private GoogleApiClient getGoogleApiClient() {
