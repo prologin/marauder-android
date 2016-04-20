@@ -5,28 +5,34 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.util.Log;
 import android.view.Window;
 import android.webkit.CookieManager;
+import android.webkit.GeolocationPermissions;
+import android.webkit.WebChromeClient;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Toast;
 
-import org.jetbrains.annotations.Contract;
-
 // The main activity is a simple wrapper around a WebView that shows
 // the online Marauder's map UI.
 public class MainActivity extends AppCompatActivity {
 
   private static final String TAG = MainActivity.class.getSimpleName();
+  private final Object lock = new Object();
   protected WebView webView;
+  private Intent callPhoneIntent;
+  private JSInterface jsInterface;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -34,7 +40,7 @@ public class MainActivity extends AppCompatActivity {
     super.onCreate(savedInstanceState);
 
     if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) !=
-        PackageManager.PERMISSION_GRANTED) {
+            PackageManager.PERMISSION_GRANTED) {
       requestFineLocation();
     } else {
       ReporterService.sendConfigRefreshIntent(this);
@@ -48,6 +54,21 @@ public class MainActivity extends AppCompatActivity {
         BuildConfig.VERSION_NAME, defaultUserAgent));
 
     webView.getSettings().setJavaScriptEnabled(true);
+    webView.getSettings().setJavaScriptCanOpenWindowsAutomatically(true);
+    webView.getSettings().setGeolocationEnabled(true);
+
+    webView.setWebChromeClient(new WebChromeClient() {
+      public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
+        callback.invoke(origin, true, false);
+      }
+    });
+    jsInterface = new JSInterface(this, webView);
+    webView.addJavascriptInterface(jsInterface, "Native");
+
+    if ("DEBUG".equals(getString(R.string.buildName)) && Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+      Log.i(TAG, "Enabling webview debugging");
+      WebView.setWebContentsDebuggingEnabled(true);
+    }
 
     Log.d(TAG, "Loading UI at " + getUiUrl());
     webView.loadUrl(getUiUrl());
@@ -81,17 +102,35 @@ public class MainActivity extends AppCompatActivity {
 
   private void requestFineLocation() {
     ActivityCompat.requestPermissions(this,
-                                      new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 0);
+        new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 0);
+  }
+
+  private void requestCallPhone() {
+    ActivityCompat.requestPermissions(this,
+        new String[]{Manifest.permission.CALL_PHONE}, 0);
   }
 
   @Override
   public void onRequestPermissionsResult(int requestCode,
                                          @NonNull String[] permissions,
                                          @NonNull int[] grantResults) {
-    if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-      ReporterService.sendConfigRefreshIntent(this);
-    } else {
-      requestFineLocation();
+    for (int i = 0; i < permissions.length; i++) {
+      String permission = permissions[i];
+      int result = grantResults[i];
+      if (permission.equals(Manifest.permission.ACCESS_FINE_LOCATION)) {
+        if (result == PackageManager.PERMISSION_GRANTED) {
+          ReporterService.sendConfigRefreshIntent(this);
+        } else {
+          requestFineLocation();
+        }
+      }
+      if (permission.equals(Manifest.permission.CALL_PHONE)) {
+        if (result == PackageManager.PERMISSION_GRANTED) {
+          executePendingCall();
+        } else {
+          requestCallPhone();
+        }
+      }
     }
   }
 
@@ -105,5 +144,56 @@ public class MainActivity extends AppCompatActivity {
 
   private boolean urlMapsToUi(String url) {
     return url.startsWith(getUiUrl()) || url.startsWith(getLoginUrl());
+  }
+
+  private void executePendingCall() {
+    synchronized (lock) {
+      if (callPhoneIntent != null) {
+        // Eventually start pending phone call intent
+        jsInterface.actionSuccess("call-phone");
+        startActivity(callPhoneIntent);
+        callPhoneIntent = null;
+      }
+    }
+  }
+
+  public void callPhoneNumber(String phoneNumber) {
+    synchronized (lock) {
+      try {
+        callPhoneIntent = new Intent(Intent.ACTION_CALL);
+        callPhoneIntent.setData(Uri.parse("tel:" + phoneNumber));
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE) !=
+                PackageManager.PERMISSION_GRANTED) {
+          requestCallPhone();
+        } else {
+          executePendingCall();
+        }
+      } catch (android.content.ActivityNotFoundException ex) {
+        runOnUiThread(new Runnable() {
+          @Override
+          public void run() {
+            Toast.makeText(MainActivity.this, "Unable to make the phone call.",
+                Toast.LENGTH_SHORT).show();
+          }
+        });
+      }
+    }
+  }
+
+  public void sendPing(final String userId) {
+    runOnUiThread(new Runnable() {
+      @Override
+      public void run() {
+        // TODO
+        Toast.makeText(MainActivity.this, String.format("Sending a ping to %s!", userId),
+            Toast.LENGTH_SHORT).show();
+        new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
+          @Override
+          public void run() {
+            jsInterface.actionSuccess("send-ping");
+          }
+        }, 2000);
+      }
+    });
   }
 }
