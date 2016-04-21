@@ -19,15 +19,19 @@ android {
         targetSdkVersion 23
         versionCode 1
         versionName "1.0"
+
+        resValue "string", "gcmAppId", "org.prologin.marauder"
     }
     buildTypes {
         debug {
             resValue "string", "buildName", "DEBUG"
             resValue "string", "baseApiUrl", project.ext.has("baseApiUrl") ? project.ext["baseApiUrl"] : "https://prologin.org"
+            resValue "string", "gcmSenderId", project.ext.has("gcmSenderId") ? project.ext["gcmSenderId"] : "315661421577"
         }
         release {
             resValue "string", "buildName", "RELEASE"
             resValue "string", "baseApiUrl", "https://prologin.org"
+            resValue "string", "gcmSenderId", "315661421577"
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             zipAlignEnabled true

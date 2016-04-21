@@ -17,11 +17,14 @@ import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.gcm.GoogleCloudMessaging;
+import com.google.android.gms.iid.InstanceID;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.common.collect.ImmutableList;
 
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -32,6 +35,8 @@ public class ReporterService extends Service implements LocationListener {
 
   public static final String REFRESH_CONFIG_ACTION =
       "org.prologin.marauder.ReporterService.REFRESH_CONFIG_ACTION";
+  private static final String REFRESH_GCM_TOKEN_ACTION =
+      "org.prologin.marauder.ReporterService.REFRESH_GCM_TOKEN_ACTION";
 
   // How often to get geofence updates from the API.
   private static final long CONFIG_REFRESH_INTERVAL_MS = 900 * 1000;
@@ -47,10 +52,17 @@ public class ReporterService extends Service implements LocationListener {
   private GoogleApiClient gApiClient = null;
   private List<EventLocation> eventLocations = ImmutableList.of();
   private boolean withinGeofence = false;
+  private String gcmToken = null;
 
   public static void sendConfigRefreshIntent(Context context) {
     Intent intent = new Intent(context, ReporterService.class);
     intent.setAction(REFRESH_CONFIG_ACTION);
+    context.startService(intent);
+  }
+
+  public static void sendGcmTokenRefreshIntent(Context context) {
+    Intent intent = new Intent(context, ReporterService.class);
+    intent.setAction(REFRESH_GCM_TOKEN_ACTION);
     context.startService(intent);
   }
 
@@ -92,11 +104,18 @@ public class ReporterService extends Service implements LocationListener {
   }
 
   private void onHandleIntent(Intent intent) {
-    Log.w(TAG, "Starting Marauder config refresh.");
-    eventLocations = getConfiguredGeofences();
-    setupGeoTracking();
-    scheduleAlarm();
-    Log.w(TAG, "Marauder config refresh done.");
+    if (intent == null || intent.getAction() == REFRESH_CONFIG_ACTION) {
+      Log.w(TAG, "Refreshing Marauder config.");
+      eventLocations = getConfiguredGeofences();
+      gcmToken = refreshGcmToken();
+      setupGeoTracking();
+      scheduleAlarm();
+      Log.w(TAG, "Marauder config refreshed.");
+    } else if (intent.getAction() == REFRESH_GCM_TOKEN_ACTION) {
+      Log.w(TAG, "Refreshing GCM token.");
+      gcmToken = refreshGcmToken();
+      Log.w(TAG, "GCM token refreshed.");
+    }
   }
 
   private GoogleApiClient getGoogleApiClient() {
@@ -109,6 +128,18 @@ public class ReporterService extends Service implements LocationListener {
     return gApiClient;
   }
 
+  private String refreshGcmToken() {
+    try {
+      InstanceID instanceId = InstanceID.getInstance(this);
+      return instanceId.getToken(getString(R.string.gcmSenderId),
+          GoogleCloudMessaging.INSTANCE_ID_SCOPE,
+          null);
+    } catch (IOException e) {
+      Log.e(TAG, "Could not get GCM token", e);
+      return null;
+    }
+  }
+
   private void scheduleAlarm() {
     Intent intent = new Intent(getApplicationContext(), ReporterService.class);
     intent.setAction(REFRESH_CONFIG_ACTION);
@@ -117,8 +148,8 @@ public class ReporterService extends Service implements LocationListener {
     AlarmManager alarmManager = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
     alarmManager.cancel(pendingIntent);
     alarmManager.set(AlarmManager.RTC_WAKEUP,
-                     System.currentTimeMillis() + CONFIG_REFRESH_INTERVAL_MS,
-                     pendingIntent);
+        System.currentTimeMillis() + CONFIG_REFRESH_INTERVAL_MS,
+        pendingIntent);
   }
 
   private List<EventLocation> getConfiguredGeofences() {
@@ -147,8 +178,8 @@ public class ReporterService extends Service implements LocationListener {
     long intervalMs =
         withinGeofence ? LOCATION_REFRESH_SHORT_INTERVAL_MS : LOCATION_REFRESH_LONG_INTERVAL_MS;
     int accuracy = withinGeofence
-                   ? LocationRequest.PRIORITY_HIGH_ACCURACY
-                   : LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY;
+        ? LocationRequest.PRIORITY_HIGH_ACCURACY
+        : LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY;
     Log.w(TAG, "Setting up geofencing for " + (withinGeofence ? "high" : "low") + " accuracy.");
 
     LocationRequest request = new LocationRequest();
@@ -156,6 +187,13 @@ public class ReporterService extends Service implements LocationListener {
     request.setFastestInterval(LOCATION_REFRESH_SHORT_INTERVAL_MS);
     request.setPriority(accuracy);
     LocationServices.FusedLocationApi.requestLocationUpdates(getGoogleApiClient(), request, this);
+  }
+
+  private GcmSettings getGcmSettings() {
+    if (gcmToken == null) {
+      return null;
+    }
+    return new GcmSettings(gcmToken, getString(R.string.gcmAppId));
   }
 
   @Override
@@ -175,7 +213,7 @@ public class ReporterService extends Service implements LocationListener {
 
     try {
       ApiClient apiClient = new ApiClient(this);
-      apiClient.reportLocation(location, withinGeofence);
+      apiClient.reportLocation(location, withinGeofence, getGcmSettings());
     } catch (Exception e) {
       Log.e(TAG, "Could not report updated location", e);
     }

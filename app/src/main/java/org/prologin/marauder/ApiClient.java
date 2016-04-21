@@ -51,7 +51,7 @@ public class ApiClient {
     }
   }
 
-  public void reportLocation(Location l, boolean withinGeofence) throws NetworkErrorException {
+  public void reportLocation(Location l, boolean withinGeofence, GcmSettings gcmSettings) throws NetworkErrorException {
     try {
       JSONObject data = new JSONObject();
       data.put("in_area", withinGeofence);
@@ -59,6 +59,12 @@ public class ApiClient {
         data.put("lat", l.getLatitude());
         data.put("lon", l.getLongitude());
         data.put("accuracy_meters", l.getAccuracy());
+      }
+      if (gcmSettings != null) {
+        JSONObject gcmData = new JSONObject();
+        gcmData.put("app_id", gcmSettings.getAppId());
+        gcmData.put("token", gcmSettings.getToken());
+        data.put("gcm", gcmData);
       }
       performApiCall("/report/", data);
     } catch (Exception e) {
