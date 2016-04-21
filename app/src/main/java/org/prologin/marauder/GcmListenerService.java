@@ -23,7 +23,7 @@ public class GcmListenerService extends com.google.android.gms.gcm.GcmListenerSe
     }
 
     Notification notification = new NotificationCompat.Builder(this)
-        .setSmallIcon(R.drawable.logo)
+        .setSmallIcon(R.mipmap.logo)
         .setContentTitle(title)
         .setContentText(message)
         .setPriority(NotificationCompat.PRIORITY_MAX)
