@@ -32,19 +32,12 @@ public class MainActivity extends AppCompatActivity {
   private final Object lock = new Object();
   protected WebView webView;
   private Intent callPhoneIntent;
-  private JSInterface jsInterface;
+  private JsInterface jsInterface;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     getWindow().requestFeature(Window.FEATURE_PROGRESS);
     super.onCreate(savedInstanceState);
-
-    if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) !=
-            PackageManager.PERMISSION_GRANTED) {
-      requestFineLocation();
-    } else {
-      ReporterService.sendConfigRefreshIntent(this);
-    }
 
     webView = new WebView(this);
     setContentView(webView);
@@ -62,7 +55,7 @@ public class MainActivity extends AppCompatActivity {
         callback.invoke(origin, true, false);
       }
     });
-    jsInterface = new JSInterface(this, webView);
+    jsInterface = new JsInterface(this, webView);
     webView.addJavascriptInterface(jsInterface, "Native");
 
     if ("DEBUG".equals(getString(R.string.buildName)) && Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
@@ -98,6 +91,15 @@ public class MainActivity extends AppCompatActivity {
         new Preferences(MainActivity.this).setCookie(manager.getCookie(url));
       }
     });
+  }
+
+  public void triggerConfigRefreshOrPermissionUpdate() {
+    if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) !=
+        PackageManager.PERMISSION_GRANTED) {
+      requestFineLocation();
+    } else {
+      ReporterService.sendConfigRefreshIntent(this);
+    }
   }
 
   private void requestFineLocation() {
@@ -163,7 +165,7 @@ public class MainActivity extends AppCompatActivity {
         callPhoneIntent = new Intent(Intent.ACTION_CALL);
         callPhoneIntent.setData(Uri.parse("tel:" + phoneNumber));
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE) !=
-                PackageManager.PERMISSION_GRANTED) {
+            PackageManager.PERMISSION_GRANTED) {
           requestCallPhone();
         } else {
           executePendingCall();
@@ -178,22 +180,5 @@ public class MainActivity extends AppCompatActivity {
         });
       }
     }
-  }
-
-  public void sendPing(final String userId) {
-    runOnUiThread(new Runnable() {
-      @Override
-      public void run() {
-        // TODO
-        Toast.makeText(MainActivity.this, String.format("Sending a ping to %s!", userId),
-            Toast.LENGTH_SHORT).show();
-        new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
-          @Override
-          public void run() {
-            jsInterface.actionSuccess("send-ping");
-          }
-        }, 2000);
-      }
-    });
   }
 }

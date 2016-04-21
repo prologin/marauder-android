@@ -9,12 +9,12 @@ import org.json.JSONArray;
 
 import java.util.Arrays;
 
-public class JSInterface {
-  private static final String TAG = JSInterface.class.getSimpleName();
+public class JsInterface {
+  private static final String TAG = JsInterface.class.getSimpleName();
   private final MainActivity activity;
   private final WebView webView;
 
-  JSInterface(MainActivity activity, WebView webView) {
+  JsInterface(MainActivity activity, WebView webView) {
     this.activity = activity;
     this.webView = webView;
   }
@@ -44,7 +44,7 @@ public class JSInterface {
   }
 
   @JavascriptInterface
-  public void sendPing(String userId) {
-    activity.sendPing(userId);
+  public void startupCompleted() {
+    activity.triggerConfigRefreshOrPermissionUpdate();
   }
 }
