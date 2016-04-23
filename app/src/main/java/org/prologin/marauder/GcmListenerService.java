@@ -23,9 +23,10 @@ public class GcmListenerService extends com.google.android.gms.gcm.GcmListenerSe
     }
 
     Notification notification = new NotificationCompat.Builder(this)
-        .setSmallIcon(R.mipmap.logo)
+        .setSmallIcon(R.drawable.logo_mono)
         .setContentTitle(title)
         .setContentText(message)
+        .setColor(getColor(R.color.colorPrimary))
         .setPriority(NotificationCompat.PRIORITY_MAX)
         .setVibrate(new long[] { 1000, 250, 250, 250 })
         .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
