@@ -7,6 +7,7 @@ import android.graphics.Color;
 import android.media.RingtoneManager;
 import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
 public class GcmListenerService extends com.google.android.gms.gcm.GcmListenerService {
@@ -26,7 +27,7 @@ public class GcmListenerService extends com.google.android.gms.gcm.GcmListenerSe
         .setSmallIcon(R.drawable.logo_mono)
         .setContentTitle(title)
         .setContentText(message)
-        .setColor(getColor(R.color.colorPrimary))
+        .setColor(ContextCompat.getColor(this, R.color.colorPrimary))
         .setPriority(NotificationCompat.PRIORITY_MAX)
         .setVibrate(new long[] { 1000, 250, 250, 250 })
         .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
@@ -35,6 +36,5 @@ public class GcmListenerService extends com.google.android.gms.gcm.GcmListenerSe
     NotificationManager manager =
         (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
     manager.notify(0, notification);
-
   }
 }
